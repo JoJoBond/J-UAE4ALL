@@ -10,6 +10,17 @@
 #include "sound.h"
 #include "savestate.h"
 
+#ifdef DREAMCAST
+#define VIDEO_FLAGS_INIT SDL_HWSURFACE|SDL_FULLSCREEN
+#else
+#define VIDEO_FLAGS_INIT SDL_HWSURFACE
+#endif
+
+#ifdef DOUBLEBUFFER
+#define VIDEO_FLAGS VIDEO_FLAGS_INIT | SDL_DOUBLEBUF
+#else
+#define VIDEO_FLAGS VIDEO_FLAGS_INIT
+#endif
 
 extern int emulating;
 
@@ -17,6 +28,7 @@ static char *text_str_title="----- UAE4ALL rc3 ------";
 static char *text_str_load="Select Image Disk (X)";
 static char *text_str_save="SaveStates (Y)";
 static char *text_str_throttle="Throttle ";
+static char *text_str_scaleing="Scale";
 static char *text_str_frameskip="Frameskip";
 static char *text_str_autosave="Save Disks";
 static char *text_str_eject="Eject DF1";
@@ -80,6 +92,10 @@ int mainMenu_frameskip=0;
 #endif
 #endif
 
+#ifdef SCALING
+extern unsigned char uae4all_scalefactor;
+int mainMenu_scalefactor=uae4all_scalefactor;
+#endif
 
 #if !defined(DEBUG_UAE4ALL) && !defined(PROFILER_UAE4ALL) && !defined(AUTO_RUN) && !defined(AUTO_FRAMERATE)
 int mainMenu_sound=-1;
@@ -96,151 +112,199 @@ static void draw_mainMenu(int c)
 {
 	static int b=0;
 	int bb=(b%6)/3;
+	unsigned currline = 3;
 
 	text_draw_background();
 	text_draw_window(40,20,260,216,text_str_title);
 	if ((c==0)&&(bb))
-		write_text_inv(6,3,text_str_load);
+		write_text_inv(6,currline,text_str_load);
 	else
-		write_text(6,3,text_str_load);
-	write_text(6,4,text_str_separator);
+		write_text(6,currline,text_str_load);
+	currline++;
 	
-	write_text(6,5,text_str_separator);
+	write_text(6,currline,text_str_separator);
+	currline++;
+	
+	write_text(6,currline,text_str_separator);
+	currline++;
+	
 	if ((c==1)&&(bb))
-		write_text_inv(6,6,text_str_save);
+		write_text_inv(6,currline,text_str_save);
 	else
-		write_text(6,6,text_str_save);
+		write_text(6,currline,text_str_save);
+	currline++;
 
-	write_text(6,7,text_str_separator);
+	write_text(6,currline,text_str_separator);
+	currline++;
 
-	write_text(6,9,text_str_throttle);
+	write_text(6,currline,text_str_throttle);
 	if ((mainMenu_throttle==0)&&((c!=2)||(bb)))
-		write_text_inv(17,9,text_str_0);
+		write_text_inv(17,currline,text_str_0);
 	else
-		write_text(17,9,text_str_0);
+		write_text(17,currline,text_str_0);
 	if ((mainMenu_throttle==1)&&((c!=2)||(bb)))
-		write_text_inv(19,9,text_str_20);
+		write_text_inv(19,currline,text_str_20);
 	else
-		write_text(19,9,text_str_20);
+		write_text(19,currline,text_str_20);
 	if ((mainMenu_throttle==2)&&((c!=2)||(bb)))
-		write_text_inv(22,9,text_str_40);
+		write_text_inv(22,currline,text_str_40);
 	else
-		write_text(22,9,text_str_40);
+		write_text(22,currline,text_str_40);
 	if ((mainMenu_throttle==3)&&((c!=2)||(bb)))
-		write_text_inv(25,9,text_str_60);
+		write_text_inv(25,currline,text_str_60);
 	else
-		write_text(25,9,text_str_60);
+		write_text(25,currline,text_str_60);
 	if ((mainMenu_throttle==4)&&((c!=2)||(bb)))
-		write_text_inv(28,9,text_str_80);
+		write_text_inv(28,currline,text_str_80);
 	else
-		write_text(28,9,text_str_80);
+		write_text(28,currline,text_str_80);
 	if ((mainMenu_throttle==5)&&((c!=2)||(bb)))
-		write_text_inv(31,9,text_str_100);
+		write_text_inv(31,currline,text_str_100);
 	else
-		write_text(31,9,text_str_100);
+		write_text(31,currline,text_str_100);
+	currline+=2;
 
-	write_text(6,11,text_str_frameskip);
+	write_text(6,currline,text_str_frameskip);
 	if ((mainMenu_frameskip==0)&&((c!=3)||(bb)))
-		write_text_inv(17,11,text_str_0);
+		write_text_inv(17,currline,text_str_0);
 	else
-		write_text(17,11,text_str_0);
+		write_text(17,currline,text_str_0);
 	if ((mainMenu_frameskip==1)&&((c!=3)||(bb)))
-		write_text_inv(19,11,text_str_1);
+		write_text_inv(19,currline,text_str_1);
 	else
-		write_text(19,11,text_str_1);
+		write_text(19,currline,text_str_1);
 	if ((mainMenu_frameskip==2)&&((c!=3)||(bb)))
-		write_text_inv(21,11,text_str_2);
+		write_text_inv(21,currline,text_str_2);
 	else
-		write_text(21,11,text_str_2);
+		write_text(21,currline,text_str_2);
 	if ((mainMenu_frameskip==3)&&((c!=3)||(bb)))
-		write_text_inv(23,11,text_str_3);
+		write_text_inv(23,currline,text_str_3);
 	else
-		write_text(23,11,text_str_3);
+		write_text(23,currline,text_str_3);
 	if ((mainMenu_frameskip==4)&&((c!=3)||(bb)))
-		write_text_inv(25,11,text_str_4);
+		write_text_inv(25,currline,text_str_4);
 	else
-		write_text(25,11,text_str_4);
+		write_text(25,currline,text_str_4);
 	if ((mainMenu_frameskip==5)&&((c!=3)||(bb)))
-		write_text_inv(27,11,text_str_5);
+		write_text_inv(27,currline,text_str_5);
 	else
-		write_text(27,11,text_str_5);
+		write_text(27,currline,text_str_5);
 	if ((mainMenu_frameskip==-1)&&((c!=3)||(bb)))
-		write_text_inv(29,11,text_str_auto);
+		write_text_inv(29,currline,text_str_auto);
 	else
-		write_text(29,11,text_str_auto);
-
-	write_text(6,13,text_str_vpos);
-	if ((mainMenu_vpos==0)&&((c!=4)||(bb)))
-		write_text_inv(17,13,text_str_0);
-	else
-		write_text(17,13,text_str_0);
-	if ((mainMenu_vpos==1)&&((c!=4)||(bb)))
-		write_text_inv(19,13,text_str_8);
-	else
-		write_text(19,13,text_str_8);
-	if ((mainMenu_vpos==2)&&((c!=4)||(bb)))
-		write_text_inv(21,13,text_str_16);
-	else
-		write_text(21,13,text_str_16);
-	if ((mainMenu_vpos==3)&&((c!=4)||(bb)))
-		write_text_inv(24,13,text_str_24);
-	else
-		write_text(24,13,text_str_24);
-	if ((mainMenu_vpos==4)&&((c!=4)||(bb)))
-		write_text_inv(27,13,text_str_32);
-	else
-		write_text(27,13,text_str_32);
-	if ((mainMenu_vpos==5)&&((c!=4)||(bb)))
-		write_text_inv(30,13,text_str_40);
-	else
-		write_text(30,13,text_str_40);
-
-	write_text(6,15,text_str_sound);
-	if ((!mainMenu_sound)&&((c!=5)||(bb)))
-		write_text_inv(17,15,text_str_off);
-	else
-		write_text(17,15,text_str_off);
-	if ((mainMenu_sound)&&((c!=5)||(bb)))
-		write_text_inv(22,15,text_str_on);
-	else
-		write_text(22,15,text_str_on);
+		write_text(29,currline,text_str_auto);
+	currline+=2;
 	
-	write_text(6,17,text_str_autosave);
-	if ((!mainMenu_autosave)&&((c!=6)||(bb)))
-		write_text_inv(17,17,text_str_off);
+	write_text(6,currline,text_str_vpos);
+	if ((mainMenu_vpos==0)&&((c!=4)||(bb)))
+		write_text_inv(17,currline,text_str_0);
 	else
-		write_text(17,17,text_str_off);
-	if ((mainMenu_autosave)&&((c!=6)||(bb)))
-		write_text_inv(22,17,text_str_on);
+		write_text(17,currline,text_str_0);
+	if ((mainMenu_vpos==1)&&((c!=4)||(bb)))
+		write_text_inv(19,currline,text_str_8);
 	else
-		write_text(22,17,text_str_on);
+		write_text(19,currline,text_str_8);
+	if ((mainMenu_vpos==2)&&((c!=4)||(bb)))
+		write_text_inv(21,currline,text_str_16);
+	else
+		write_text(21,currline,text_str_16);
+	if ((mainMenu_vpos==3)&&((c!=4)||(bb)))
+		write_text_inv(24,currline,text_str_24);
+	else
+		write_text(24,currline,text_str_24);
+	if ((mainMenu_vpos==4)&&((c!=4)||(bb)))
+		write_text_inv(27,currline,text_str_32);
+	else
+		write_text(27,currline,text_str_32);
+	if ((mainMenu_vpos==5)&&((c!=4)||(bb)))
+		write_text_inv(30,currline,text_str_40);
+	else
+		write_text(30,currline,text_str_40);
+	currline+=2;
 
-	write_text(6,19,text_str_separator);
-	if ((c==7)&&(bb))
-		write_text_inv(6,20,text_str_eject);
+	write_text(6,currline,text_str_scaleing);
+#ifdef SCALING
+	if ((mainMenu_scalefactor==1)&&((c!=5)||(bb)))
+		write_text_inv(17,currline,text_str_1);
 	else
-		write_text(6,20,text_str_eject);
+		write_text(17,currline,text_str_1);
+	if ((mainMenu_scalefactor==2)&&((c!=5)||(bb)))
+		write_text_inv(19,currline,text_str_2);
+	else
+		write_text(19,currline,text_str_2);
+	if ((mainMenu_scalefactor==3)&&((c!=5)||(bb)))
+		write_text_inv(21,currline,text_str_3);
+	else
+		write_text(21,currline,text_str_3);
+	if ((mainMenu_scalefactor==4)&&((c!=5)||(bb)))
+		write_text_inv(23,currline,text_str_4);
+	else
+		write_text(23,currline,text_str_4);
+#endif
+	currline+=2;
 
-	write_text(6,21,text_str_separator);
+	write_text(6,currline,text_str_sound);
+	if ((!mainMenu_sound)&&((c!=6)||(bb)))
+		write_text_inv(17,currline,text_str_off);
+	else
+		write_text(17,currline,text_str_off);
+	if ((mainMenu_sound)&&((c!=6)||(bb)))
+		write_text_inv(22,currline,text_str_on);
+	else
+		write_text(22,currline,text_str_on);
+	currline+=2;
+	
+	write_text(6,currline,text_str_autosave);
+	if ((!mainMenu_autosave)&&((c!=7)||(bb)))
+		write_text_inv(17,currline,text_str_off);
+	else
+		write_text(17,currline,text_str_off);
+	if ((mainMenu_autosave)&&((c!=7)||(bb)))
+		write_text_inv(22,currline,text_str_on);
+	else
+		write_text(22,currline,text_str_on);
+	currline++;
+	
+	write_text(6,currline,text_str_separator);
+	currline++;
+	
 	if ((c==8)&&(bb))
-		write_text_inv(6,22,text_str_reset);
+		write_text_inv(6,currline,text_str_eject);
 	else
-		write_text(6,22,text_str_reset);
-	write_text(6,23,text_str_separator);
-
+		write_text(6,currline,text_str_eject);
+	currline++;
+	
+	write_text(6,currline,text_str_separator);
+	currline++;
+	
 	if ((c==9)&&(bb))
-		write_text_inv(6,24,text_str_run);
+		write_text_inv(6,currline,text_str_reset);
 	else
-		write_text(6,24,text_str_run);
-	write_text(6,25,text_str_separator);
+		write_text(6,currline,text_str_reset);
+	currline++;
+	
+	write_text(6,currline,text_str_separator);
+	currline++;
 
-	write_text(6,26,text_str_separator);
 	if ((c==10)&&(bb))
-		write_text_inv(6,27,text_str_exit);
+		write_text_inv(6,currline,text_str_run);
 	else
-		write_text(6,27,text_str_exit);
-//	write_text(6,28,text_str_separator);
+		write_text(6,currline,text_str_run);
+	currline++;
+	
+	write_text(6,currline,text_str_separator);
+	currline++;
 
+	write_text(6,currline,text_str_separator);
+	currline++;
+	
+	if ((c==11)&&(bb))
+		write_text_inv(6,currline,text_str_exit);
+	else
+		write_text(6,currline,text_str_exit);
+	currline++;
+	
+//	write_text(6,currline++,text_str_separator);
 	text_flip();
 	b++;
 }
@@ -309,7 +373,7 @@ static int key_mainMenu(int *cp)
 			{
 				back_c=c;
 				hit0=1;
-				c=7;
+				c=8;
 			}
 			else if (hit3)
 			{
@@ -325,15 +389,15 @@ static int key_mainMenu(int *cp)
 			{
 				back_c=c;
 				hit0=1;
-				c=8;
+				c=9;
 			}
 			else if (up)
 			{
-				if (c>0) c=(c-1)%11;
-				else c=10;
+				if (c>0) c=(c-1)%12;
+				else c=11;
 			}
 			else if (down)
-				c=(c+1)%11;
+				c=(c+1)%12;
 			switch(c)
 			{
 				case 0:
@@ -397,37 +461,73 @@ static int key_mainMenu(int *cp)
 						else
 							mainMenu_vpos=0;
 					}
+#ifdef SCALING
+					mainMenu_scalefactor = uae4all_scalefactor;
+#endif
 					break;
 				case 5:
-					if ((left)||(right))
-						mainMenu_sound=~mainMenu_sound;
+#ifdef SCALING
+					if (left)
+					{
+						if (mainMenu_scalefactor>1)
+							mainMenu_scalefactor--;
+						else
+							mainMenu_scalefactor=4;
+					}
+					else if (right)
+					{
+						if (mainMenu_scalefactor<4)
+							mainMenu_scalefactor++;
+						else
+							mainMenu_scalefactor=1;
+					}
+					if(hit0)
+					{
+						uae4all_scalefactor = mainMenu_scalefactor;
+						SDL_FreeSurface(prSDLScreen);
+						prSDLScreen=SDL_SetVideoMode(uae4all_scalefactor*320,uae4all_scalefactor*240,16,VIDEO_FLAGS);
+
+					}
+#else
+					if (down)
+						c++;
+					else if (up)
+						c--;
+#endif
 					break;
 				case 6:
 					if ((left)||(right))
-						mainMenu_autosave=~mainMenu_autosave;
+						mainMenu_sound=~mainMenu_sound;
+#ifdef SCALING
+					mainMenu_scalefactor = uae4all_scalefactor;
+#endif
 					break;
 				case 7:
+					if ((left)||(right))
+						mainMenu_autosave=~mainMenu_autosave;
+					break;
+				case 8:
 					if (hit0)
 					{
 						mainMenu_case=MAIN_MENU_CASE_EJECT;
 						end=1;
 					}
 					break;
-				case 8:
+				case 9:
 					if (hit0)
 					{
 						mainMenu_case=MAIN_MENU_CASE_RESET;
 						end=1;
 					}
 					break;
-				case 9:
+				case 10:
 					if (hit0)
 					{
 						mainMenu_case=MAIN_MENU_CASE_RUN;
 						end=1;
 					}
 					break;
-				case 10:
+				case 11:
 					if (hit0)
 					{
 						mainMenu_case=MAIN_MENU_CASE_REBOOT;

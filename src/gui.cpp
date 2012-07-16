@@ -87,6 +87,10 @@ int emulated_mouse=0;
 int emulated_mouse_button1=0;
 int emulated_mouse_button2=0;
 
+#ifdef SCALING
+extern unsigned char uae4all_scalefactor;
+#endif
+
 static void getChanges(void)
 {
     m68k_speed=mainMenu_throttle;
@@ -107,7 +111,11 @@ int gui_init (void)
 {
 //Se ejecuta justo despues del MAIN
     if (prSDLScreen==NULL)
+#ifdef SCALING
+	prSDLScreen=SDL_SetVideoMode(uae4all_scalefactor*320,uae4all_scalefactor*240,16,VIDEO_FLAGS);
+#else
 	prSDLScreen=SDL_SetVideoMode(320,240,16,VIDEO_FLAGS);
+#endif
     SDL_ShowCursor(SDL_DISABLE);
     SDL_JoystickEventState(SDL_ENABLE);
     SDL_JoystickOpen(0);
